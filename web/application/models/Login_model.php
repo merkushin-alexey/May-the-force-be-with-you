@@ -6,12 +6,11 @@ use App;
 use Exception;
 use System\Core\CI_Model;
 
-class Login_model extends CI_Model {
-
+class Login_model extends CI_Model 
+{
     public function __construct()
     {
         parent::__construct();
-
     }
 
     public static function logout()
@@ -23,11 +22,15 @@ class Login_model extends CI_Model {
      * @return User_model
      * @throws Exception
      */
-    public static function login(): User_model
+    public static function login($login, $password): User_model
     {
         // TODO: task 1, аутентификация
-
-        self::start_session();
+        $user = User_model::find_user_by_email($login);
+        if($user->is_loaded() && $user->get_password() === $password)
+        {   
+            self::start_session($user->get_id());
+        }
+        return $user;
     }
 
     public static function start_session(int $user_id)

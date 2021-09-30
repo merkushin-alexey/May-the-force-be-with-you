@@ -234,8 +234,9 @@ class Comment_model extends Emerald_Model {
      */
     public static function get_all_by_assign_id(int $assign_id): array
     {
-        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created', 'ASC')->many());
+        return App::get_s()->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created', 'ASC')->many();;
     }
+
 
     /**
      * @param User_model $user
@@ -248,9 +249,15 @@ class Comment_model extends Emerald_Model {
         // TODO: task 3, лайк комментария
     }
 
-    public static function get_all_by_replay_id(int $reply_id)
+     /**
+     * @param int $reply_id
+     * @return self[]
+     * @throws Exception
+     */
+    public static function get_all_by_reply_id(int $reply_id)
     {
         // TODO task 2, дополнительно, вложенность комментариев
+        return App::get_s()->from(self::CLASS_TABLE)->where(['reply_id' => $reply_id])->orderBy('time_created', 'ASC')->many();
     }
 
     /**
@@ -283,6 +290,7 @@ class Comment_model extends Emerald_Model {
         $o->text = $data->get_text();
 
         $o->user = User_model::preparation($data->get_user(), 'main_page');
+        // $o->coments = self::preparation_many($data->get_comments(),'default');
 
         $o->likes = $data->get_likes();
 
@@ -290,6 +298,18 @@ class Comment_model extends Emerald_Model {
         $o->time_updated = $data->get_time_updated();
 
         return $o;
+    }
+
+    /**
+     * @param int $id
+     * @return Comment_model
+     */
+    public static function get_by_id(int $id): Comment_model
+    {
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $id])
+            ->select()
+            ->one());
     }
 
 }

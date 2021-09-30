@@ -269,6 +269,19 @@ class User_model extends Emerald_model {
     {
         // TODO: task 4, добавление денег
 
+        App::get_s()->from(self::get_table())
+        ->where(['id' => $this->get_id()])
+        ->update([
+            sprintf('wallet_total_refilled = wallet_total_refilled + %s', $sum),
+            sprintf('wallet_balance = wallet_balance + %s', $sum)
+        ])
+        ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+
         return TRUE;
     }
 
@@ -347,6 +360,7 @@ class User_model extends Emerald_model {
     public static function find_user_by_email(string $email): User_model
     {
         // TODO: task 1, аутентификация
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['email' => $email])->one());
     }
 
     /**
