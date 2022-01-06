@@ -152,6 +152,7 @@ class Post_model extends Emerald_Model
     public function get_comments():array
     {
        // TODO: task 2, комментирование
+       return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
 
     /**
@@ -216,8 +217,31 @@ class Post_model extends Emerald_Model
     public function increment_likes(User_model $user): bool
     {
         // TODO: task 3, лайк поста
+        App::get_s()->from(self::get_table())
+                    ->where(['id' => $user->get_id()])
+                    ->update(sprintf('likes = likes + %s', App::get_s()->quote(1)))
+                    ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+
+        return TRUE;
     }
 
+    /**
+     * @param int $post_id
+     *
+     * @return Post_model
+     */
+    public static function find_post_by_id(int $post_id): Post_model
+    {
+        return static::transform_one(App::get_s()->from(self::get_table())
+            ->where(["post_id" => $post_id])
+            ->select()
+            ->one());   
+    }
 
     /**
      * @param Post_model $data

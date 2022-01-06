@@ -4,6 +4,7 @@ use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
 use Model\Login_model;
+use Model\Comment_model;
 
 /**
  * Created by PhpStorm.
@@ -64,16 +65,53 @@ class Main_page extends MY_Controller
     public function comment()
     {
         // TODO: task 2, комментирование
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $text = App::get_ci()->input->post('text');
+        $reply_id = App::get_ci()->input->post('reply_id');
+        $assign_id = App::get_ci()->input->post('assign_id');
+        $user_id = App::get_s()->session->id;
+        $comment = [
+            'text' => $text,
+            'user_id' => $user_id,
+            'reply_id' => $reply_id,
+            'assign_id' => $assign_id,
+            'likes' => 0,
+            'time_created' => date('Y-m-d H:i', strtotime(now())),
+            'time_updated' => date('Y-m-d H:i', strtotime(now())),
+        ];
+        $comment = Comment_model::create($comment);
+        return $this->response_success(['comments' => $comment]);
     }
 
     public function like_comment(int $comment_id)
     {
         // TODO: task 3, лайк комментария
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $user = User_model::get_user();
+        $user->decrement_likes();
+        $comment = Comment_model::find_post_by_id($comment_id);
+        $comment->increment_likes($user);
+        return $this->response_success();
     }
 
     public function like_post(int $post_id)
     {
         // TODO: task 3, лайк поста
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $user = User_model::get_user();
+        $user->decrement_likes();
+        $post = Post_model::find_post_by_id($post_id);
+        $post->increment_likes($user);
+        return $this->response_success();
     }
 
     public function add_money()
@@ -85,7 +123,8 @@ class Main_page extends MY_Controller
     }
 
     public function get_post(int $post_id) {
-        // TODO получения поста по id
+        $post = Post_model::find_post_by_id($post_id);
+        return $this->response_success(['post' => User_model::preparation($post, 'default')]);
     }
 
     public function buy_boosterpack()

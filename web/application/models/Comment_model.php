@@ -74,8 +74,7 @@ class Comment_model extends Emerald_Model {
         $this->assign_id = $assign_id;
         return $this->save('assign_id', $assign_id);
     }
-
-
+    
     /**
      * @return string
      */
@@ -246,11 +245,37 @@ class Comment_model extends Emerald_Model {
     public function increment_likes(User_model $user): bool
     {
         // TODO: task 3, лайк комментария
+        App::get_s()->from(self::get_table())
+                    ->where(['id' => $this->get_id()])
+                    ->update(sprintf('likes = likes + %s', App::get_s()->quote(1)))
+                    ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    /**
+     * @param int $comment_id
+     *
+     * @return Comment_model
+     */
+    public static function find_post_by_id(int $comment_id): Comment_model
+    {
+        return static::transform_one(App::get_s()->from(self::get_table())
+            ->where(["post_id" => $comment_id])
+            ->select()
+            ->one());   
     }
 
     public static function get_all_by_replay_id(int $reply_id)
     {
         // TODO task 2, дополнительно, вложенность комментариев
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['reply_id' => $reply_id])->orderBy('time_created', 'ASC')->many());
+        
     }
 
     /**

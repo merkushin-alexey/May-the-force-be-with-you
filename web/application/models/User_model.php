@@ -349,8 +349,7 @@ class User_model extends Emerald_model {
         return static::transform_one(App::get_s()->from('user')
             ->where(["email" => $email, "password" => $password])
             ->select()
-            ->one());
-            
+            ->one());   
     }
 
     /**
