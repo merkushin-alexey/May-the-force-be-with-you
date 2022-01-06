@@ -3,6 +3,7 @@
 use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
+use Model\Login_model;
 
 /**
  * Created by PhpStorm.
@@ -46,12 +47,17 @@ class Main_page extends MY_Controller
     public function login()
     {
         // TODO: task 1, аутентификация
-
-        return $this->response_success();
+        $login = App::get_ci()->input->post('login');
+        $password = App::get_ci()->input->post('password');
+        $user = User_model::find_user_by_email_and_password($login, $password);
+        // $user = User_model::find_user_by_email_and_password('admin@admin.pl', "12345");
+        $user = Login_model::login($user);
+        return $this->response_success(['user' => User_model::preparation($user, 'default')]);
     }
 
     public function logout()
     {
+        Login_model::logout();
         // TODO: task 1, аутентификация
     }
 
