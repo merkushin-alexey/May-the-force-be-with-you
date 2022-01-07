@@ -268,6 +268,19 @@ class User_model extends Emerald_model {
     public function add_money(float $sum): bool
     {
         // TODO: task 4, добавление денег
+        App::get_s()->set_transaction_repeatable_read()->execute();
+        App::get_s()->start_trans()->execute();
+        App::get_s()->from(self::get_table())
+                    ->where(['id' => $this->get_id()])
+                    ->update(sprintf('wallet_balance = wallet_balance + %s', App::get_s()->quote($sum)))
+                    ->update(sprintf('wallet_total_refilled = wallet_total_refilled + %s', App::get_s()->quote($sum)))
+                    ->execute();
+        if ( !App::get_s()->is_affected())
+        {
+            App::get_s()->rollback()->execute();
+            return FALSE;
+        }
+        App::get_s()->commit()->execute();
 
         return TRUE;
     }
@@ -282,6 +295,27 @@ class User_model extends Emerald_model {
     public function remove_money(float $sum): bool
     {
         // TODO: task 5, списание денег
+        $balans =  App::get_s()->from(self::get_table())
+                                ->where(['id' => $this->get_id()])
+                                ->select('wallet_balance')
+                                ->execute();
+        $money = $balans->get_wallet_balance - $sum;                  
+        if($money < 0) {
+            return FALSE;
+        }
+
+        App::get_s()->set_transaction_repeatable_read()->execute();
+        App::get_s()->start_trans()->execute();
+        App::get_s()->from(self::get_table())
+                    ->where(['id' => $this->get_id()])
+                    ->update(sprintf('wallet_balance = wallet_balance - %s', App::get_s()->quote($sum)))
+                    ->execute();
+        if ( !App::get_s()->is_affected())
+        {
+            App::get_s()->rollback()->execute();
+            return FALSE;
+        }
+        App::get_s()->commit()->execute();
 
         return TRUE;
     }
@@ -297,7 +331,7 @@ class User_model extends Emerald_model {
             ->update(sprintf('likes_balance = likes_balance - %s', App::get_s()->quote(1)))
             ->execute();
 
-        if ( ! App::get_s()->is_affected())
+        if ( !App::get_s()->is_affected())
         {
             return FALSE;
         }

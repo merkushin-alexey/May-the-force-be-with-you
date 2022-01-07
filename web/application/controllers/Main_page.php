@@ -58,6 +58,10 @@ class Main_page extends MY_Controller
 
     public function logout()
     {
+        if ( !User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
         Login_model::logout();
         // TODO: task 1, аутентификация
     }
@@ -119,6 +123,14 @@ class Main_page extends MY_Controller
         // TODO: task 4, пополнение баланса
 
         $sum = (float)App::get_ci()->input->post('sum');
+        $user = new User_model();
+        $result = $user->add_money($sum);
+        if($result) {
+            return $this->response_success();
+        }
+        else {
+            return $this->response_error();
+        }
 
     }
 
