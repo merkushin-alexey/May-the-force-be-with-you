@@ -48,19 +48,26 @@ class Main_page extends MY_Controller
     public function login()
     {
         // TODO: task 1, аутентификация
+        if ( User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_ALLREADY_LOGGED);
+        }
         $login = App::get_ci()->input->post('login');
         $password = App::get_ci()->input->post('password');
-        $user = User_model::find_user_by_email_and_password($login, $password);
-        // $user = User_model::find_user_by_email_and_password('admin@admin.pl', "12345");
+        try {
+            $user = User_model::find_user_by_email_and_password($login, $password);
+        } catch (Exception $exception) {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_INTERNAL_ERROR);
+        }
         $user = Login_model::login($user);
         return $this->response_success(['user' => User_model::preparation($user, 'default')]);
     }
 
     public function logout()
     {
-        if ( !User_model::is_logged())
+        if ( User_model::is_logged())
         {
-            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_ALLREADY_LOGGED);
         }
         Login_model::logout();
         // TODO: task 1, аутентификация
@@ -69,7 +76,7 @@ class Main_page extends MY_Controller
     public function comment()
     {
         // TODO: task 2, комментирование
-        if ( ! User_model::is_logged())
+        if ( !User_model::is_logged())
         {
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
@@ -86,14 +93,19 @@ class Main_page extends MY_Controller
             'time_created' => date('Y-m-d H:i', strtotime(now())),
             'time_updated' => date('Y-m-d H:i', strtotime(now())),
         ];
-        $comment = Comment_model::create($comment);
+        try {
+            $comment = Comment_model::create($comment);
+        } catch (Exception $exception) {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_INTERNAL_ERROR);
+        }
+    
         return $this->response_success(['comments' => $comment]);
     }
 
     public function like_comment(int $comment_id)
     {
         // TODO: task 3, лайк комментария
-        if ( ! User_model::is_logged())
+        if ( !User_model::is_logged())
         {
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
@@ -107,13 +119,17 @@ class Main_page extends MY_Controller
     public function like_post(int $post_id)
     {
         // TODO: task 3, лайк поста
-        if ( ! User_model::is_logged())
+        if ( !User_model::is_logged())
         {
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
         $user = User_model::get_user();
         $user->decrement_likes();
-        $post = Post_model::find_post_by_id($post_id);
+        try {
+            $post = Post_model::find_post_by_id($post_id);
+        } catch (Exception $exception) {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_INTERNAL_ERROR);
+        }
         $post->increment_likes($user);
         return $this->response_success();
     }
@@ -135,7 +151,12 @@ class Main_page extends MY_Controller
     }
 
     public function get_post(int $post_id) {
-        $post = Post_model::find_post_by_id($post_id);
+        try {
+            $post = Post_model::find_post_by_id($post_id);
+        } catch (Exception $exception) {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_INTERNAL_ERROR);
+        }
+        
         return $this->response_success(['post' => User_model::preparation($post, 'default')]);
     }
 
